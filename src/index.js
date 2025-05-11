@@ -45,6 +45,10 @@ app.get("/signup",(req,res)=>{
     res.render("signup")
 })
 
+app.get("/login",(req,res)=>{
+    res.render("login")
+})
+
 app.post("/signup",(req,res)=>{
     console.log(req.body)
     const sql = `INSERT INTO users (username, password) VALUES ('${req.body.username}', '${req.body.password}')`
@@ -55,7 +59,26 @@ app.post("/signup",(req,res)=>{
         }
         res.send("Signup successful")
     })
-    
+})
+
+app.post("/login",(req,res)=>{
+    const sql =`SELECT COUNT(*) AS total
+    FROM users 
+    WHERE username = '${req.body.username}' 
+    AND password = '${req.body.password}';
+    `
+    db.get(sql,(err, row)=>{
+        if (err) {
+            console.error(err)
+            return res.status(400).send("Login failed")
+            }
+            console.log(row)
+            if (row.total == 1){
+                return res.redirect("/home")
+            }
+            res.render("login", {error: "Username or password incorrect"})
+               
+    })
 })
 
 app.listen(port,()=>{
