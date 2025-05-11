@@ -1,6 +1,9 @@
 import express from "express"
 import mustacheExpress from "mustache-express"
 import sqlite3 from "sqlite3"
+import {nanoid} from "nanoid"
+import cookieParser from "cookie-parser"
+import requireValidSession from "./middleware/requireValidSession.js"
 
 const app = express()
 const port = 3000
@@ -28,6 +31,25 @@ db.serialize(() => {
   });
 });
 
+db.serialize(() => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS sessions (
+    session_id VARCHAR(128) PRIMARY KEY,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    expires_at TIMESTAMP, 
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+)`
+  , (err) => {
+    if (err) {
+      console.error("Failed to create session table:", err);
+      process.exit(1);
+    }
+    console.log("Ensured session table exists");
+  });
+});
+
 app.locals.db = db
 
 //setting up express to use mustache engine
@@ -36,6 +58,7 @@ app.set('view engine', 'mst');
 app.set('views', './src/views');
 
 app.use(express.urlencoded({extended:true}))
+app.use(cookieParser())
 
 app.get("/",(req,res)=>{
     res.render("index",{name: "Joe", title: "My Chatbot App"})
@@ -62,7 +85,7 @@ app.post("/signup",(req,res)=>{
 })
 
 app.post("/login",(req,res)=>{
-    const sql =`SELECT COUNT(*) AS total
+    const sql =`SELECT COUNT(*) AS total, id
     FROM users 
     WHERE username = '${req.body.username}' 
     AND password = '${req.body.password}';
@@ -74,12 +97,31 @@ app.post("/login",(req,res)=>{
             }
             console.log(row)
             if (row.total == 1){
-                return res.redirect("/home")
+                const sessionid = nanoid(10)
+                const sessionsql = `INSERT INTO sessions (session_id, user_id, expires_at) 
+                                    VALUES ('${sessionid}', ${row.id}, DATETIME('now', '+1 hour'));`
+                                    console.log(sessionsql)
+                db.run(sessionsql,(err)=>{
+                    if (err) {
+                        console.error(err)
+                        return res.status(500).render("login", {error: "Failed to create session"})
+                        }
+                    console.log(sessionid)
+                })
+                return res.cookie("sessionid", sessionid, {httpOnly: true})
+                    .cookie("userid", row.id)
+                    .redirect("/home")
             }
-            res.render("login", {error: "Username or password incorrect"})
+            return res.status(401).render("login", {error: "Username or password incorrect"})
                
     })
 })
+
+app.get("/home", requireValidSession,(req,res)=>{
+    return res.render("home")
+})
+
+
 
 app.listen(port,()=>{
     console.log("Chatbot listening on port:" + port)
