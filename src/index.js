@@ -27,10 +27,6 @@ app.get("/signup",(req,res)=>{
     res.render("signup")
 })
 
-app.get("/login",(req,res)=>{
-    res.render("login")
-})
-
 app.post("/signup",(req,res)=>{
     console.log(req.body)
     const sql = `INSERT INTO users (username, password) VALUES ('${req.body.username}', '${req.body.password}')`
@@ -63,7 +59,7 @@ app.post("/login",(req,res)=>{
                 db.run(sessionsql,(err)=>{
                     if (err) {
                         console.error(err)
-                        return res.status(500).render("login", {error: "Failed to create session"})
+                        return res.status(500).render("index", {error: "Failed to create session"})
                         }
                     console.log(sessionid)
                 })
@@ -71,7 +67,7 @@ app.post("/login",(req,res)=>{
                     .cookie("userid", row.id)
                     .redirect("/home")
             }
-            return res.status(401).render("login", {error: "Username or password incorrect"})
+            return res.status(401).render("index", {error: "Username or password incorrect"})
                
     })
 })
@@ -80,7 +76,9 @@ app.get("/home", requireValidSession,(req,res)=>{
     return res.render("home")
 })
 
-
+app.post("/logout",(req,res)=>{
+    res.clearCookie("sessionid").clearCookie("userid").redirect("/")
+})
 
 app.listen(port,()=>{
     console.log("Chatbot listening on port:" + port)

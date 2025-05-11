@@ -1,1 +1,7 @@
-<body> Hello this is the home page</body>
+<body> Hello this is the home page
+    <form action="/logout" method="post">
+        <input type="submit" value="Logout">
+    </form>
+
+</body>
+
