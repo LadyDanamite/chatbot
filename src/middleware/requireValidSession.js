@@ -3,7 +3,7 @@ export default function requireValidSession (req,res,next){
     const userid = req.cookies.userid
     const db = req.app.locals.db
     if (!sessionid || !userid){
-        return res.redirect(302,"login")
+        return res.redirect(302,"/")
     }
     const sql =`SELECT COUNT(*) AS total
     FROM sessions 
@@ -14,11 +14,11 @@ export default function requireValidSession (req,res,next){
     db.get(sql,(err,row)=>{
         if (err){
             console.error(err)
-            return res.redirect(302, "login")
+            return res.redirect(302, "/")
         }
         console.log(row)
             if (row.total == 0){
-                return res.redirect(302,"login")
+                return res.redirect(302,"/")
             }
         next()
     })
