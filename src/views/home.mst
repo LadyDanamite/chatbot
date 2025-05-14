@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatbot</title>
     <link rel="stylesheet" href="chatbot.css">
+    <script src="chatbot.js"/>
 </head>
 
 <body> 
@@ -12,9 +13,10 @@
     <div class="chat-container">
         <div class="chat-box" id="chat-box">
             <p><strong>Bot:</strong> Hello! How can I help you?</p>
-        </div>
-        <input type="text" id="user-input" placeholder="Type a message...">
-        <button onclick="sendMessage()">Send</button>
+            </div>
+
+        <input type="text" id="user-input" placeholder="Type a message..." onkeydown="handleEnter(event)">
+        <button onclick="sendMessage()" id="send">Send</button>
         <form action="/logout" method="post">
             <button type="submit" class="logout-btn">Logout</button>
         </form>
